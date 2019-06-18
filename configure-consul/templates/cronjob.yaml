@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   schedule: "*/1 * * * *"
+  ttlSecondsAfterFinished: 3600
   jobTemplate:
     metadata:
       labels:
@@ -21,6 +22,8 @@ spec:
             - name: {{ .Chart.Name }}
               image: "{{ required "Value env.repository is required!" .Values.env.repository }}/{{ required "Value env.tag is required!" .Values.env.tag }}-{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
               imagePullPolicy: Always
+              labels:
+                app: {{ .Chart.Name }}
               env:
                 - name: REGION
                   valueFrom:
