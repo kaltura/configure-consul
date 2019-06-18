@@ -1,0 +1,33 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Chart.Name }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ required "Value env.repository is required!" .Values.env.repository }}/{{ required "Value env.tag is required!" .Values.env.tag }}-{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
+              imagePullPolicy: Always
+              env:
+                - name: REGION
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kaltura-environment
+                      key: env.region
+          restartPolicy: OnFailure
+          nodeSelector:
+            kaltura.role: core
+            beta.kubernetes.io/os: linux
