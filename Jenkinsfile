@@ -16,6 +16,10 @@ pipeline {
                 script {
                     docker.build("configure-consul:$BUILD_NUMBER", "--build-arg VERSION=$version .")
                 }
+            }
+        }
+        stage('Deploy') {
+            steps {
                 deploy('configure-consul', "$version")
             }
         }
