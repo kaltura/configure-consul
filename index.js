@@ -4,9 +4,37 @@ const k8s = require('@kubernetes/client-node');
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
-const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+
+function reloadPods() {
+    const k8sApi = kc.makeApiClient(k8s.AppsV1beta2Api);
+    const lastModifiedTime = Date.now();
+    var resource = {
+        spec: { 
+            template: {
+                metadata: {
+                    labels: {
+                        'kaltura/consul-last-update': `${lastModifiedTime}`
+                    }
+                }
+            }
+        }
+    };
+
+    const httpOptions = {
+        headers: {
+            'Content-Type': 'application/merge-patch+json'
+        }
+    };
+    
+    k8sApi.patchNamespacedDeployment('coredns', 'kube-system', resource, undefined, undefined, httpOptions)
+    .then(() => {
+        console.log(`Updated coredns deployment, last modified [${lastModifiedTime}]`)
+    })
+    .catch(err => console.error(`Failed to update coredns deployment: `, (err.response ? err.response.body : err)));
+}
 
 function setConsoleDNS(ips) {
+    const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
     k8sApi.readNamespacedConfigMap('coredns', 'kube-system')
     .then(response => {
         var existingConfigMap = response.body;
@@ -42,7 +70,10 @@ service.consul:53 {
 
         if(existingConfigMap.data.Corefile != configmap.data.Corefile) {
             k8sApi.replaceNamespacedConfigMap('coredns', 'kube-system', configmap)
-            .then(response => console.log('Generated core-dns map replaced'))
+            .then(response => {
+                console.log('Generated core-dns map replaced');
+                reloadPods();
+            })
             .catch(err => console.error('Failed to replace core-dns config-maps: ', (err.response ? err.response.body : err)));
         }
     })

@@ -9,6 +9,20 @@ metadata:
   name: {{ .Chart.Name }}
 rules:
 - apiGroups:
+    - "apps"
+  resources:
+    - replicasets
+  verbs:
+    - list
+
+- apiGroups:
+    - "apps"
+  resources:
+    - deployments
+  verbs:
+    - patch
+    
+- apiGroups:
     - ""
   resources:
     - configmaps
