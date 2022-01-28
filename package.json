@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.10.1",
-    "aws-sdk": "^2.473.0"
+    "aws-sdk": "^2.1052.0"
   }
 }
